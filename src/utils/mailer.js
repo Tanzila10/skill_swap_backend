@@ -27,7 +27,7 @@ transporter.verify((error) => {
 export const sendEmail = async ({ to, subject, text, html }) => {
   try {
     const info = await transporter.sendMail({
-      from: `"Skill-swap" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+      from: `"Skill-swap" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
