@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=mongodb+srv://tanzila:HxUOCrSOQr8hIpng@cluster0.asneij8.mongodb.net/skillswap?retryWrites=true&w=majority
+      - NODE_ENV=production
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+  mongodb:
+    image: mongo:5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_DATABASE=skillswap
+
+volumes:
+  mongodb_data:

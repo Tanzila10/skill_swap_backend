@@ -1,5 +1,5 @@
-import { prisma } from '../config/dbConnection.js'
-import { asyncHandler } from '../utils/asyncHandler.js'
+import { prisma } from '../../config/dbConnection.js'
+import { asyncHandler } from '../../utils/asyncHandler.js'
 
 const sendSwapRequest = asyncHandler(async (req, res) => {
   const { receiver_id, offered_skill_id, requested_skill_id } = req.body
