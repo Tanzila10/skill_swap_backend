@@ -6,16 +6,19 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# Copy MongoDB initialization script
+COPY init-mongo.js /docker-entrypoint-initdb.d/
+
 # Install dependencies
 RUN npm install
 
-# Generate Prisma client with the correct binary targets
+# Generate Prisma client
 RUN npx prisma generate
 
 # Copy source code
 COPY . .
 
-# # Build the application (if needed)
+# Build the application (if needed)
 # RUN npm run build
 
 # Expose port
