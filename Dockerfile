@@ -15,8 +15,6 @@ RUN npm install
 # Generate Prisma client
 RUN npx prisma generate
 
-RUN npx prisma db push
-
 # Copy source code
 COPY . .
 
