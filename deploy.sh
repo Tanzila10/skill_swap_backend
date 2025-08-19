@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Navigate to the project directory
-cd ~/skillswap-app
+cd ~/skillswap-app/skill_swap_backend
 
 # Pull the latest changes from the main branch
 echo "Pulling latest changes from Git..."
