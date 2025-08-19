@@ -8,6 +8,11 @@ services:
     environment:
       - DATABASE_URL=mongodb://mongodb:27017/skillswap?replicaSet=rs0
       - NODE_ENV=production
+      - SMTP_USER=tanzilapatel.2002@gmail.com
+      - SMTP_PASS=beintxejrnuymsav
+      - JWT_SECRET=your_jwt_secret
+      - ACCESS_SECRET=your_access_secret
+      - REFRESH_SECRET=your_refresh_secret
     depends_on:
       mongodb:
         condition: service_healthy
