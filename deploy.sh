@@ -8,7 +8,7 @@ docker-compose down
 docker-compose up -d --build
 
 # Run database migrations
-docker-compose exec app npx prisma migrate deploy
+docker-compose exec app npx prisma db push
 
 # Restart application
 docker-compose restart app

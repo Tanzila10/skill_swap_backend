@@ -19,5 +19,5 @@ jobs:
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          cd ~/skillswap-app
+          cd ~/skillswap-app/skill_swap_backend
           ./deploy.sh
