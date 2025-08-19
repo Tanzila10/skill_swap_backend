@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "3000:3000"
+      - "5000:5000"
     environment:
       - DATABASE_URL=mongodb+srv://tanzila:HxUOCrSOQr8hIpng@cluster0.asneij8.mongodb.net/skillswap?retryWrites=true&w=majority
       - NODE_ENV=production
