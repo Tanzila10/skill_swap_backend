@@ -23,23 +23,32 @@ export const prisma = new PrismaClient()
 //   })
 
 export const connectWithRetry = async () => {
-  let connected = false;
-  let retries = 5;
-
-  while (!connected && retries > 0) {
+  const maxRetries = 10;
+  let retryCount = 0;
+  
+  while (retryCount < maxRetries) {
     try {
       await prisma.$connect();
       console.log('Database connected successfully');
-      connected = true;
+      
+      // Test if the replica set has a primary
+      await prisma.$runCommandRaw({ isMaster: 1 });
+      console.log('Replica set has a primary');
+      
+      return;
     } catch (error) {
-      console.error('Database connection failed, retrying in 5 seconds...', error);
-      retries--;
-      await new Promise(resolve => setTimeout(resolve, 5000));
+      retryCount++;
+      console.error(`Database connection failed (attempt ${retryCount}/${maxRetries}):`, error.message);
+      
+      if (retryCount === maxRetries) {
+        console.error('Could not connect to database after maximum retries');
+        throw error;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delay = Math.pow(2, retryCount) * 1000;
+      console.log(`Retrying in ${delay/1000} seconds...`);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
-  }
-
-  if (!connected) {
-    console.error('Could not connect to database after multiple retries');
-    process.exit(1);
   }
 };

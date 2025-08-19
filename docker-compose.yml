@@ -12,6 +12,12 @@ services:
       mongodb:
         condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   mongodb:
     image: mongo:5
@@ -26,7 +32,7 @@ services:
       test: echo "rs.status().ok" | mongosh localhost:27017/test --quiet
       interval: 10s
       timeout: 10s
-      retries: 5
+      retries: 10
       start_period: 40s
 
 volumes:

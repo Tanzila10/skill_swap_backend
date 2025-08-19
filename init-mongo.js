@@ -3,7 +3,13 @@ rs.initiate({
   members: [
     {
       _id: 0,
-      host: "localhost:27017"
+      host: "mongodb:27017"
     }
   ]
 });
+
+// # Check the status of the replica set
+rs.status();
+
+// # Exit the shell
+exit

@@ -8,7 +8,7 @@ import routes from './routes/index.js';
 import cookieParser from 'cookie-parser';
 dotenv.config();
 import * as socketService from './services/socket.js';
-import { connectWithRetry } from './config/dbConnection.js';
+import { connectWithRetry, prisma } from './config/dbConnection.js';
 // import userRoutes from './routes/userRoutes.js';
 // import postRoutes from './routes/postRoutes.js';
 
@@ -26,8 +26,28 @@ socketService.init(server);
 
 app.use('/api', routes);
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date() });
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await prisma.$runCommandRaw({ ping: 1 });
+    
+    // Check if replica set has a primary
+    const status = await prisma.$runCommandRaw({ isMaster: 1 });
+    const hasPrimary = status.ismaster || status.primary;
+    
+    res.status(200).json({ 
+      status: 'OK', 
+      database: 'connected',
+      replicaSet: hasPrimary ? 'primary-available' : 'no-primary',
+      timestamp: new Date() 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'ERROR', 
+      error: error.message,
+      timestamp: new Date() 
+    });
+  }
 });
 
 app.get('/api/health', (req, res) => {
