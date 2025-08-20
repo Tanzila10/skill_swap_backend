@@ -1,6 +1,5 @@
-node_modules
+prisma/generated
+node_modules/
 .env
-/src/generated/prisma
-
-/generated/prisma
-/example
+# prisma/
+/prisma/generated/prisma
