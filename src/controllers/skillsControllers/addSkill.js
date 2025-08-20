@@ -3,8 +3,9 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const addSkills = asyncHandler(async (req, res) => {
     const { user_id, title, description, level, category, achievement } = req.body;
+    // const user_id = req.user.id
 
-    console.log("Body data", req.body);
+    console.log("Body data", user_id);
 
     // Validate required fields
     // if (!userId || !title || !category) {

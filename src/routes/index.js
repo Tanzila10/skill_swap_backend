@@ -13,6 +13,6 @@ router.use('/skills', skillRoutes);
 
 router.use('/messages', messageRoutes);
 
-router.use('/swap-request', swapRequestRoutes);
+router.use('/request', swapRequestRoutes);
 
 export default router;

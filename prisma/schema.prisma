@@ -28,12 +28,20 @@ model User {
   otp_expiry     DateTime?
   reset_token    String?
 
-  skills                 Skill[]
-  refreshTokens          RefreshToken[]
-  sentMessages           Message[]      @relation("sent_messages")
-  receivedMessages       Message[]      @relation("received_messages")
-  sent_swap_requests     SwapRequest[]  @relation("sent_swap_requests")
-  received_swap_requests SwapRequest[]  @relation("received_swap_requests")
+  skills           Skill[]
+  refreshTokens    RefreshToken[]
+  sentMessages     Message[]      @relation("sent_messages")
+  receivedMessages Message[]      @relation("received_messages")
+
+  sent_swap_requests     SwapRequest[] @relation("SentSwapRequests")
+  received_swap_requests SwapRequest[] @relation("ReceivedSwapRequests")
+
+  // Active swap relations
+  active_swaps_as_user1 ActiveSwap[] @relation("ActiveSwapsAsUser1")
+  active_swaps_as_user2 ActiveSwap[] @relation("ActiveSwapsAsUser2")
+
+  // Completion relations
+  swap_completions SwapCompletion[]
 }
 
 model Message {
@@ -73,8 +81,8 @@ model Skill {
   level       Level
   achievement String?
 
-  user_id String @db.ObjectId
-  user    User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id String? @db.ObjectId // Make this optional
+  user    User?   @relation(fields: [user_id], references: [id], onDelete: Cascade) // Make relation optional
 
   category_id String        @db.ObjectId
   category    SkillCategory @relation(fields: [category_id], references: [id])
@@ -82,8 +90,12 @@ model Skill {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  offered_swap_requests   SwapRequest[] @relation("offered_skills")
-  requested_swap_requests SwapRequest[] @relation("requested_skills")
+  offered_in_requests   SwapRequest[] @relation("OfferedSkills")
+  requested_in_requests SwapRequest[] @relation("RequestedSkills")
+
+  // Active swap relations
+  active_swaps_skill1 ActiveSwap[] @relation("ActiveSwapsSkill1")
+  active_swaps_skill2 ActiveSwap[] @relation("ActiveSwapsSkill2")
 }
 
 model SkillCategory {
@@ -93,26 +105,86 @@ model SkillCategory {
 }
 
 model SwapRequest {
-  id                 String        @id @default(auto()) @map("_id") @db.ObjectId
-  sender_id          String        @db.ObjectId
-  receiver_id        String        @db.ObjectId
-  offered_skill_id   String        @db.ObjectId
-  requested_skill_id String        @db.ObjectId
-  status             RequestStatus @default(pending)
-  created_at         DateTime      @default(now())
-  updated_at         DateTime      @updatedAt
+  id                 String     @id @default(cuid()) @map("_id")
+  sender_id          String
+  receiver_id        String
+  offered_skill_id   String
+  requested_skill_id String
+  message            String?
+  status             SwapStatus @default(PENDING)
+  rejection_reason   String?
+  created_at         DateTime   @default(now())
+  updated_at         DateTime   @updatedAt
 
-  sender          User  @relation("sent_swap_requests", fields: [sender_id], references: [id])
-  receiver        User  @relation("received_swap_requests", fields: [receiver_id], references: [id])
-  offered_skill   Skill @relation("offered_skills", fields: [offered_skill_id], references: [id])
-  requested_skill Skill @relation("requested_skills", fields: [requested_skill_id], references: [id])
+  // Relations
+  sender          User  @relation("SentSwapRequests", fields: [sender_id], references: [id], onDelete: Cascade)
+  receiver        User  @relation("ReceivedSwapRequests", fields: [receiver_id], references: [id], onDelete: Cascade)
+  offered_skill   Skill @relation("OfferedSkills", fields: [offered_skill_id], references: [id], onDelete: Cascade)
+  requested_skill Skill @relation("RequestedSkills", fields: [requested_skill_id], references: [id], onDelete: Cascade)
 
-  @@unique([sender_id, receiver_id, offered_skill_id, requested_skill_id])
+  active_swap ActiveSwap?
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([status])
+  @@map("swap_requests")
 }
 
-enum RequestStatus {
-  pending
-  accepted
-  rejected
+model ActiveSwap {
+  id              String           @id @default(cuid()) @map("_id")
+  swap_request_id String           @unique
+  user1_id        String
+  user2_id        String
+  skill1_id       String
+  skill2_id       String
+  status          ActiveSwapStatus @default(active)
+  created_at      DateTime         @default(now())
+  completed_at    DateTime?
+
+  // Relations
+  swap_request SwapRequest @relation(fields: [swap_request_id], references: [id], onDelete: Cascade)
+  user1        User        @relation("ActiveSwapsAsUser1", fields: [user1_id], references: [id], onDelete: Cascade)
+  user2        User        @relation("ActiveSwapsAsUser2", fields: [user2_id], references: [id], onDelete: Cascade)
+  skill1       Skill       @relation("ActiveSwapsSkill1", fields: [skill1_id], references: [id], onDelete: Cascade)
+  skill2       Skill       @relation("ActiveSwapsSkill2", fields: [skill2_id], references: [id], onDelete: Cascade)
+
+  completions SwapCompletion[]
+
+  @@index([user1_id])
+  @@index([user2_id])
+  @@index([status])
+  @@map("active_swaps")
+}
+
+model SwapCompletion {
+  id             String   @id @default(cuid()) @map("_id")
+  active_swap_id String
+  completed_by   String
+  rating         Int?
+  feedback       String?
+  created_at     DateTime @default(now())
+
+  // Relations
+  active_swap ActiveSwap @relation(fields: [active_swap_id], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [completed_by], references: [id], onDelete: Cascade)
+
+  @@unique([active_swap_id, completed_by])
+  @@map("swap_completions")
+}
+
+enum SwapStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+
+  @@map("swap_status")
+}
+
+enum ActiveSwapStatus {
+  active
+  completed
   cancelled
+
+  @@map("active_swap_status")
 }

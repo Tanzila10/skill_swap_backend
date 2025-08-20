@@ -19,18 +19,33 @@ const getAllSkills = asyncHandler(async (req, res) => {
             name: true,
           },
         },
+        category: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
 
-    // Determine next cursor
+    // Filter out skills with null users and log the orphaned skills
+    const validSkills = skills.filter(skill => {
+      if (!skill.user) {
+        console.warn(`Orphaned skill found: ${skill.id} - user_id: ${skill.user_id} does not exist`);
+        return false;
+      }
+      return true;
+    });
+
+    // Determine next cursor from valid skills
     let nextCursor = null;
-    if (skills.length > limit) {
-      nextCursor = skills[limit - 1].id;  // Last item in current page
-      skills.pop();  // Remove extra item
+    if (validSkills.length > limit) {
+      nextCursor = validSkills[limit - 1].id;  // Last item in current page
+      validSkills.pop();  // Remove extra item
     }
 
     res.json({
-      skills,
+      skills: validSkills,
       nextCursor,
     });
   } catch (error) {

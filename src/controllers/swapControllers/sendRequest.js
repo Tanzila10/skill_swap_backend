@@ -2,8 +2,13 @@ import { prisma } from '../../config/dbConnection.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 
 const sendSwapRequest = asyncHandler(async (req, res) => {
-  const { receiver_id, offered_skill_id, requested_skill_id } = req.body
+  const { receiver_id, offered_skill_id, requested_skill_id, message } = req.body
   const sender_id = req.user.id
+
+  // Prevent self-request
+  if (sender_id === receiver_id) {
+    return res.status(400).json({ error: "Cannot send request to yourself" })
+  }
 
   // Verify skills exist and belong to users
   const [offeredSkill, requestedSkill] = await Promise.all([
@@ -19,19 +24,30 @@ const sendSwapRequest = asyncHandler(async (req, res) => {
     return res.status(404).json({ error: "Skills not found" })
   }
 
-  // Check for existing pending request
+  // Check for existing pending request (both directions)
   const existingRequest = await prisma.swapRequest.findFirst({
     where: {
-      sender_id,
-      receiver_id,
-      offered_skill_id,
-      requested_skill_id,
-      status: 'pending'
+      OR: [
+        {
+          sender_id,
+          receiver_id,
+          offered_skill_id,
+          requested_skill_id,
+          status: 'pending'
+        },
+        {
+          sender_id: receiver_id,
+          receiver_id: sender_id,
+          offered_skill_id: requested_skill_id,
+          requested_skill_id: offered_skill_id,
+          status: 'pending'
+        }
+      ]
     }
   })
 
   if (existingRequest) {
-    return res.status(409).json({ error: "Request already sent" })
+    return res.status(409).json({ error: "Request already exists" })
   }
 
   const swapRequest = await prisma.swapRequest.create({
@@ -40,16 +56,30 @@ const sendSwapRequest = asyncHandler(async (req, res) => {
       receiver_id,
       offered_skill_id,
       requested_skill_id,
+      message: message || null,
       status: 'pending'
     },
     include: {
-      offered_skill: true,
-      requested_skill: true,
-      receiver: { select: { id: true, name: true } }
+      offered_skill: {
+        select: { id: true, title: true, description: true }
+      },
+      requested_skill: {
+        select: { id: true, title: true, description: true }
+      },
+      sender: {
+        select: { id: true, name: true, email: true }
+      },
+      receiver: {
+        select: { id: true, name: true, email: true }
+      }
     }
   })
 
-  res.status(201).json(swapRequest)
+  res.status(201).json({
+    success: true,
+    data: swapRequest,
+    message: "Swap request sent successfully"
+  })
 })
 
 export default sendSwapRequest
