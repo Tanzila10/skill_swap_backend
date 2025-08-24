@@ -1,43 +1,60 @@
-import { createMessage } from '../../models/message.models.js';
-import { getUser } from '../../utils/userManager.js';
-import * as socketService from '../../services/socket.js';
+import { prisma } from '../../config/dbConnection.js'
+import { asyncHandler } from '../../utils/asyncHandler.js'
+import * as socketService from '../../services/socket.js'
 
-const sendMessage = async (req, res) => {
+export const sendMessage = asyncHandler(async (req, res) => {
+  const { content, receiverId } = req.body
+  const senderId = req.user.userId
+  console.log("first", receiverId, req.body)
+  if (!content?.trim()) {
+    return res.status(400).json({ error: 'Message content cannot be empty' })
+  }
+
+  if (content.length > 1000) {
+    return res.status(400).json({ error: 'Message too long. Maximum 1000 characters.' })
+  }
+
+  // Create message
+  const message = await prisma.message.create({
+    data: {
+      content: content.trim(),
+      sender_id: senderId,
+      receiver_id: receiverId
+    },
+    include: {
+      sender: {
+        select: { id: true, name: true }
+      },
+      receiver: {
+        select: { id: true, name: true }
+      }
+    }
+  })
+
+  // Emit via socket if available
   try {
-    const { content, receiverId } = req.body;
-    const senderId = req.userId;
-    
-    if (!content || !receiverId) {
-      return res.status(400).json({ error: 'Content and receiver ID are required' });
-    }
-    
-    // Create message
-    const message = await createMessage(content, senderId, receiverId);
-    
-    // Get sockets for users
-    const senderSocket = getUser(senderId);
-    const receiverSocket = getUser(receiverId);
-    
-    // Emit to sender
-    if (senderSocket) {
-      socketService.getIO().to(senderSocket.socketId).emit('newMessage', {
-        ...message,
-        direction: 'outgoing'
-      });
-    }
-    
-    // Emit to receiver
-    if (receiverSocket) {
-      socketService.getIO().to(receiverSocket.socketId).emit('newMessage', {
+    const io = socketService.getIO()
+    if (io) {
+      // Emit to receiver
+      io.to(`user_${receiverId}`).emit('newMessage', {
         ...message,
         direction: 'incoming'
-      });
+      })
+      
+      // Emit to sender for confirmation
+      io.to(`user_${senderId}`).emit('messageSent', {
+        ...message,
+        direction: 'outgoing'
+      })
     }
-    
-    res.status(201).json(message);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to send message' });
+  } catch (socketError) {
+    console.error('Socket emission error:', socketError)
+    // Continue even if socket fails
   }
-};
 
-export default sendMessage;
+  res.status(201).json({
+    success: true,
+    data: message,
+    message: 'Message sent successfully'
+  })
+})

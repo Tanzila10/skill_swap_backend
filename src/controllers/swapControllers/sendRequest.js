@@ -3,7 +3,9 @@ import { asyncHandler } from '../../utils/asyncHandler.js'
 
 const sendSwapRequest = asyncHandler(async (req, res) => {
   const { receiver_id, offered_skill_id, requested_skill_id, message } = req.body
-  const sender_id = req.user.id
+  const sender_id = req.user.userId
+  console.log("user", req.user)
+  console.log("body data", req.body);
 
   // Prevent self-request
   if (sender_id === receiver_id) {

@@ -1,4 +1,7 @@
-import sendMessage from "./sendMessage.controller.js";
-import getConversationController from "./getConversation.controller.js";
+export { sendMessage } from "./sendMessage.controller.js";
+export { getConversation } from "./getConversation.controller.js";
+export { markMessagesAsRead } from './markAsRead.js';
+export { getChatList } from './getChatList.js';
+export { deleteMessage } from './deleteMessage.js';
 
-export { sendMessage, getConversationController };
+// export { sendMessage, getConversation };

@@ -60,7 +60,7 @@ GET /api/swaps/stats
 
 router.use(protectedRoutes());
 
-router.route('/').get(protectedRoutes(), sendSwapRequest);
+// router.route('/').get(protectedRoutes(), sendSwapRequest);
 // Swap request routes
 router.post('/', sendSwapRequest)
 router.get('/received', getReceivedRequests)

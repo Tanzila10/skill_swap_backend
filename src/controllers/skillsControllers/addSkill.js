@@ -5,7 +5,7 @@ const addSkills = asyncHandler(async (req, res) => {
     const { user_id, title, description, level, category, achievement } = req.body;
     // const user_id = req.user.id
 
-    console.log("Body data", user_id);
+    // console.log("Body data", user_id);
 
     // Validate required fields
     // if (!userId || !title || !category) {
@@ -21,20 +21,20 @@ const addSkills = asyncHandler(async (req, res) => {
         });
 
         // Check if user already has this skill in this category
-        const existingSkill = await prisma.skill.findFirst({
-            where: {
-                user_id: user_id,
-                title: title,
-                category_id: categoryRecord.id
-            }
-        });
+        // const existingSkill = await prisma.skill.findFirst({
+        //     where: {
+        //         user_id: user_id,
+        //         title: title,
+        //         category_id: categoryRecord.id
+        //     }
+        // });
 
-        if (existingSkill) {
-            return res.status(409).json({
-                error: "You already have this skill in this category",
-                existingSkill
-            });
-        }
+        // if (existingSkill) {
+        //     return res.status(409).json({
+        //         error: "You already have this skill in this category",
+        //         existingSkill
+        //     });
+        // }
 
         // Create new skill
         const newSkill = await prisma.skill.create({

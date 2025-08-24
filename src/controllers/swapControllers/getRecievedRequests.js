@@ -2,7 +2,7 @@ import { prisma } from '../../config/dbConnection.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 
 const getReceivedRequests = asyncHandler(async (req, res) => {
-  const user_id = req.user.id
+  const user_id = req.user.userId
   const { status = 'all', page = 1, limit = 10 } = req.query
 
   const skip = (parseInt(page) - 1) * parseInt(limit)
